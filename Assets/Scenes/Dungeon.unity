@@ -542,6 +542,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d58151ea57462447b5b88054232072f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ability1: {fileID: 7940515650462570358, guid: fe7ef902874de9e45905695b3e79f152,
-    type: 3}
+  ability1: {fileID: 0}
   ability2: {fileID: 0}
