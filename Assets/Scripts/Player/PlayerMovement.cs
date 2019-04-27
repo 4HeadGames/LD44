@@ -5,9 +5,10 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     public float speed = 10.0f;
+    public float rotateSpeed = 50.0f;
 
     private float translation;
-    private float strafe;
+    private float rotation;
 
     // Start is called before the first frame update
     void Start()
@@ -19,7 +20,8 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         translation = Input.GetAxis("Vertical") * speed * Time.deltaTime;
-        strafe = Input.GetAxis("Horizontal") * speed * Time.deltaTime;
-        transform.Translate(strafe, 0, translation);
+        rotation = Input.GetAxis("Horizontal") * rotateSpeed * Time.deltaTime;
+        transform.Translate(0, 0, translation);
+        transform.Rotate(0, rotation, 0);
     }
 }
