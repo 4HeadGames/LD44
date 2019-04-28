@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class LevelController : MonoBehaviour {
     void Start() {
-        DungeonGenerator.Generate();
+        var dungeonGenerator = (DungeonGenerator) ScriptableObject.CreateInstance("DungeonGenerator");
+        dungeonGenerator.Generate();
     }
 
     void Update() {

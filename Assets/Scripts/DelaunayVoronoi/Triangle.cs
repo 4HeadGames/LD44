@@ -64,7 +64,7 @@ namespace DelaunayVoronoi
 
             if (div == 0)
             {
-                div = 0.0001;
+                div = 1000;
             }
 
             var center = new Point(aux1 / div, aux2 / div);
