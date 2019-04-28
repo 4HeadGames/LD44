@@ -321,9 +321,9 @@ public class DungeonGenerator : ScriptableObject {
                 // TODO: This hardcodes the room rotation.
                 hallwayGenerator.FillShortestHallwayPath(
                     Mathf.CeilToInt((room.exit.x - minX - hallwaySize / 2f) / hallwaySize),
-                    Mathf.CeilToInt((room.exit.y - minY - hallwaySize / 2f) / hallwaySize),
-                    Mathf.CeilToInt((connectedRoom.entrance.x - minX + hallwaySize / 2f) / hallwaySize),
-                    Mathf.CeilToInt((connectedRoom.entrance.y - minY + hallwaySize / 2f) / hallwaySize));
+                    Mathf.CeilToInt((room.exit.y - minY) / hallwaySize),
+                    Mathf.CeilToInt((connectedRoom.entrance.x - minX) / hallwaySize),
+                    Mathf.CeilToInt((connectedRoom.entrance.y - minY) / hallwaySize));
 
                 if (!seen.Contains(connectedRoom)) {
                     queue.Enqueue(connectedRoom);
@@ -654,8 +654,8 @@ public class Room {
             aligned.y = bottomPoint;
         }
 
-        // TODO: This assumes room rotation is where entrance + exit are horizontal.
-        aligned.x += hallwaySize / 2f;
+        // TODO: This hardcodes the room rotation is where entrance + exit are horizontal.
+        aligned.x -= hallwaySize / 2f;
 
         position.x += aligned.x - start.x;
         position.y += aligned.y - start.y;
