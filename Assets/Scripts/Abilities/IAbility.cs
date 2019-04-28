@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface IAbility
-{
-  void Activate();
+public interface IAbility {
+    void Activate();
 }
