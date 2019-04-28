@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -22,19 +23,14 @@ public class PlayerMovement : MonoBehaviour {
         } else {
             Move();
         }
-
-        _moveDirection.y -= gravity * Time.deltaTime;
     }
 
     void Move() {
-        _rotation = Input.GetAxis("Horizontal") * rotateSpeed * Time.deltaTime;
-        transform.Rotate(0, _rotation, 0);
-
-        _moveDirection = Vector3.forward * Input.GetAxis("Vertical");
-        _moveDirection = transform.TransformDirection(_moveDirection);
+        _moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+        transform.forward = _moveDirection;
         _moveDirection *= speed;
 
-        _controller.Move(_moveDirection * Time.deltaTime);
+        _controller.SimpleMove(_moveDirection);
     }
 
     void Dash() {
