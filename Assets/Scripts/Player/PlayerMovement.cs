@@ -6,6 +6,7 @@ public class PlayerMovement : MonoBehaviour
 {
     public float speed = 10.0f;
     public float rotateSpeed = 300.0f;
+    public float dashSpeed = 50.0f;
     public float gravity = 20.0f;
 
     private CharacterController _controller;
@@ -17,9 +18,22 @@ public class PlayerMovement : MonoBehaviour
         _controller = GetComponent<CharacterController>();
     }
 
-    // Update is called once per frame
     void Update()
     {   
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            Dash();
+        }
+        else
+        {
+            Move();
+        }
+
+        _moveDirection.y -= gravity * Time.deltaTime;
+    }
+
+    void Move()
+    {
         _rotation = Input.GetAxis("Horizontal") * rotateSpeed * Time.deltaTime;
         transform.Rotate(0, _rotation, 0);
         
@@ -27,8 +41,22 @@ public class PlayerMovement : MonoBehaviour
         _moveDirection = transform.TransformDirection(_moveDirection);
         _moveDirection *= speed;
 
-        _moveDirection.y -= gravity * Time.deltaTime;
-
         _controller.Move(_moveDirection * Time.deltaTime);
+    }
+
+    void Dash()
+    {
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            transform.Translate(Vector3.left * dashSpeed);
+        }
+        else if (Input.GetKeyDown(KeyCode.D))
+        {
+            transform.Translate(Vector3.right * dashSpeed);
+        }
+        else if (Input.GetKeyDown(KeyCode.S))
+        {
+            transform.Translate(Vector3.back * dashSpeed);
+        }
     }
 }
