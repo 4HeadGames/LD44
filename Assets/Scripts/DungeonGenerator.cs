@@ -4,6 +4,14 @@ using System.Linq;
 using UnityEngine;
 
 
+public static class GeneratorDebugSettings {
+    public static bool DebugStartingRoom = false;
+    public static bool DebugGraph = false;
+    public static bool DebugOverlays = false;
+    public static bool DebugHallways = false;
+    public static bool DebugEntranceExits = false;
+}
+
 public class DungeonGenerator : ScriptableObject {
     /*
      * Find how big it is by querying the object dimensions, organize that information into an Object.
@@ -28,6 +36,7 @@ public class DungeonGenerator : ScriptableObject {
      *   Generate voxel hallways in between exits and entrances.
      *   Align things to a grid - entrance / exit values need to be divisible by some number (matching our TileSize).
      */
+
     public float minX;
     public float minY;
     public float maxX;
@@ -36,12 +45,15 @@ public class DungeonGenerator : ScriptableObject {
     public int hallwaySize;
 
     public void Generate() {
-        hallwaySize = 1;
+        hallwaySize = 10;
 
         var rooms = GenerateRooms();
         var startingRoom = GenerateConnections(rooms);
         var hallwayMap = GenerateHallwayMap(startingRoom, rooms);
-        DrawHallwayMap(hallwayMap);
+        if (GeneratorDebugSettings.DebugHallways) {
+            DebugHallwayMap(hallwayMap);
+        }
+
         SetHallwayTypes(hallwayMap);
         GenerateHallways(hallwayMap);
     }
@@ -51,7 +63,7 @@ public class DungeonGenerator : ScriptableObject {
 
         var rooms = new List<Room>();
 
-        var roomCount = 50;
+        var roomCount = 20;
 
         var mapWidth = 10;
         var mapHeight = 10;
@@ -67,8 +79,8 @@ public class DungeonGenerator : ScriptableObject {
 
         // Spread the rooms out.
         var spreading = true;
-        var spreadSpeed = 0.1f;
-        var minimumDistance = 20;
+        var spreadSpeed = 1f;
+        var minimumDistance = 150;
         var movements = new List<System.Tuple<Vector2, Room>>();
         while (spreading) {
             spreading = false;
@@ -142,10 +154,10 @@ public class DungeonGenerator : ScriptableObject {
         }
 
         // Add buffer to the sides.
-        minX -= 20;
-        minY -= 20;
-        maxX += 20;
-        maxY += 20;
+        minX -= 100;
+        minY -= 100;
+        maxX += 100;
+        maxY += 100;
         minX = Mathf.CeilToInt(minX);
         minY = Mathf.CeilToInt(minY);
         maxX = Mathf.CeilToInt(maxX);
@@ -210,9 +222,11 @@ public class DungeonGenerator : ScriptableObject {
             }
         }
 
-        Debug.DrawLine(new Vector3(startingRoom.position.x, 0, startingRoom.position.y),
-            new Vector3(startingRoom.position.x, 5, startingRoom.position.y),
-            Color.yellow, 100000f);
+        if (GeneratorDebugSettings.DebugStartingRoom) {
+            Debug.DrawLine(new Vector3(startingRoom.position.x, 0, startingRoom.position.y),
+                new Vector3(startingRoom.position.x, 5, startingRoom.position.y),
+                Color.yellow, 100000f);
+        }
 
         // Center room has no entrance; you spawn there.
         startingRoom.DeleteConnectionsIntoSelf();
@@ -225,7 +239,9 @@ public class DungeonGenerator : ScriptableObject {
 
         // TODO: Add some more connections randomly.
 
-        startingRoom.DrawEntireGraph();
+        if (GeneratorDebugSettings.DebugGraph) {
+            startingRoom.DebugGraph();
+        }
 
         foreach (var room in rooms) {
             room.AlignToHallwayGrid(hallwaySize, minX, minY);
@@ -269,24 +285,28 @@ public class DungeonGenerator : ScriptableObject {
 
                 if (overlaps) {
                     map[x, y] = HallwayType.Invalid;
-                    // Debug.DrawLine(
-                    //     new Vector3(worldX - hallwaySize / 2f, 0, worldY - hallwaySize / 2f),
-                    //     new Vector3(worldX + hallwaySize / 2f, 0, worldY + hallwaySize / 2f),
-                    //     Color.black, 1000000f);
-                    // Debug.DrawLine(
-                    //     new Vector3(worldX - hallwaySize / 2f, 0, worldY + hallwaySize / 2f),
-                    //     new Vector3(worldX + hallwaySize / 2f, 0, worldY - hallwaySize / 2f),
-                    //     Color.black, 1000000f);
+                    if (GeneratorDebugSettings.DebugOverlays) {
+                        Debug.DrawLine(
+                            new Vector3(worldX - hallwaySize / 2f, 0, worldY - hallwaySize / 2f),
+                            new Vector3(worldX + hallwaySize / 2f, 0, worldY + hallwaySize / 2f),
+                            Color.black, 1000000f);
+                        Debug.DrawLine(
+                            new Vector3(worldX - hallwaySize / 2f, 0, worldY + hallwaySize / 2f),
+                            new Vector3(worldX + hallwaySize / 2f, 0, worldY - hallwaySize / 2f),
+                            Color.black, 1000000f);
+                    }
                 } else {
                     map[x, y] = HallwayType.None;
-                    // Debug.DrawLine(
-                    //     new Vector3(worldX - hallwaySize / 2f, 0, worldY - hallwaySize / 2f),
-                    //     new Vector3(worldX + hallwaySize / 2f, 0, worldY + hallwaySize / 2f),
-                    //     Color.white, 1000000f);
-                    // Debug.DrawLine(
-                    //     new Vector3(worldX - hallwaySize / 2f, 0, worldY + hallwaySize / 2f),
-                    //     new Vector3(worldX + hallwaySize / 2f, 0, worldY - hallwaySize / 2f),
-                    //     Color.white, 1000000f);
+                    if (GeneratorDebugSettings.DebugOverlays) {
+                        Debug.DrawLine(
+                            new Vector3(worldX - hallwaySize / 2f, 0, worldY - hallwaySize / 2f),
+                            new Vector3(worldX + hallwaySize / 2f, 0, worldY + hallwaySize / 2f),
+                            Color.white, 1000000f);
+                        Debug.DrawLine(
+                            new Vector3(worldX - hallwaySize / 2f, 0, worldY + hallwaySize / 2f),
+                            new Vector3(worldX + hallwaySize / 2f, 0, worldY - hallwaySize / 2f),
+                            Color.white, 1000000f);
+                    }
                 }
             }
         }
@@ -298,11 +318,12 @@ public class DungeonGenerator : ScriptableObject {
         while (queue.Count > 0) {
             var room = queue.Dequeue();
             foreach (var connectedRoom in room.connectedRooms) {
+                // TODO: This hardcodes the room rotation.
                 hallwayGenerator.FillShortestHallwayPath(
                     Mathf.CeilToInt((room.exit.x - minX - hallwaySize / 2f) / hallwaySize),
                     Mathf.CeilToInt((room.exit.y - minY - hallwaySize / 2f) / hallwaySize),
-                    Mathf.CeilToInt((connectedRoom.entrance.x - minX - hallwaySize / 2f) / hallwaySize),
-                    Mathf.CeilToInt((connectedRoom.entrance.y - minY - hallwaySize / 2f) / hallwaySize));
+                    Mathf.CeilToInt((connectedRoom.entrance.x - minX + hallwaySize / 2f) / hallwaySize),
+                    Mathf.CeilToInt((connectedRoom.entrance.y - minY + hallwaySize / 2f) / hallwaySize));
 
                 if (!seen.Contains(connectedRoom)) {
                     queue.Enqueue(connectedRoom);
@@ -315,23 +336,102 @@ public class DungeonGenerator : ScriptableObject {
     }
 
     public void SetHallwayTypes(HallwayType[,] hallwayMap) {
+        for (int x = 0; x < hallwayMap.GetLength(0); x++) {
+            for (int y = 0; y < hallwayMap.GetLength(1); y++) {
+                if (hallwayMap[x, y] != HallwayType.FourWay) {
+                    continue;
+                }
 
+                bool left = x > 0 && hallwayMap[x - 1, y] != HallwayType.None && hallwayMap[x - 1, y] != HallwayType.Invalid;
+                bool right = x + 1 < hallwayMap.GetLength(0) && hallwayMap[x + 1, y] != HallwayType.None && hallwayMap[x + 1, y] != HallwayType.Invalid;
+                bool top = y > 0 && hallwayMap[x, y - 1] != HallwayType.None && hallwayMap[x, y - 1] != HallwayType.Invalid;
+                bool bottom = y + 1 < hallwayMap.GetLength(1) && hallwayMap[x, y + 1] != HallwayType.None && hallwayMap[x, y + 1] != HallwayType.Invalid;
+
+                if (left && right && top && bottom) {
+                    hallwayMap[x, y] = HallwayType.FourWay;
+                } else if (left && top && right) {
+                    hallwayMap[x, y] = HallwayType.ThreeWayBottom;
+                } else if (bottom && top && right) {
+                    hallwayMap[x, y] = HallwayType.ThreeWayLeft;
+                } else if (bottom && top && left) {
+                    hallwayMap[x, y] = HallwayType.ThreeWayRight;
+                } else if (bottom && right && left) {
+                    hallwayMap[x, y] = HallwayType.ThreeWayTop;
+                } else if (bottom && left) {
+                    hallwayMap[x, y] = HallwayType.TurnBottomLeft;
+                } else if (left && top) {
+                    hallwayMap[x, y] = HallwayType.TurnLeftTop;
+                } else if (right && bottom) {
+                    hallwayMap[x, y] = HallwayType.TurnRightBottom;
+                } else if (top && right) {
+                    hallwayMap[x, y] = HallwayType.TurnTopRight;
+                } else if (top || bottom) {
+                    hallwayMap[x, y] = HallwayType.StraightVertical;
+                } else if (left || right) {
+                    hallwayMap[x, y] = HallwayType.StraightHorizontal;
+                }
+            }
+        }
     }
 
     public void GenerateHallways(HallwayType[,] hallwayMap) {
+        var hallwayTurn = Resources.Load("Prefabs\\Hallways\\HallwayTurn");
+        var hallwayStraight = Resources.Load("Prefabs\\Hallways\\HallwayStraight");
+        var hallwayThreeWay = Resources.Load("Prefabs\\Hallways\\HallwayThreeWay");
         var hallwayFourWay = Resources.Load("Prefabs\\Hallways\\HallwayFourWay");
+
         for (int x = 0; x < hallwayMap.GetLength(0); x++) {
             for (int y = 0; y < hallwayMap.GetLength(1); y++) {
                 var hallway = hallwayMap[x, y];
+                var position = new Vector3(x * hallwaySize + minX, 0, y * hallwaySize + minY);
                 switch (hallway) {
                     case HallwayType.Invalid:
                         break;
                     case HallwayType.None:
                         break;
-                    case HallwayType.Hallway:
-                        Instantiate(hallwayFourWay,
-                            new Vector3(x * hallwaySize + minX, 0, y * hallwaySize + minY),
+                    case HallwayType.FourWay:
+                        Instantiate(hallwayFourWay, position,
                             Quaternion.identity);
+                        break;
+                    case HallwayType.ThreeWayRight:
+                        Instantiate(hallwayThreeWay, position,
+                            Quaternion.Euler(0, 0, 0));
+                        break;
+                    case HallwayType.ThreeWayBottom:
+                        Instantiate(hallwayThreeWay, position,
+                            Quaternion.Euler(0, 270, 0));
+                        break;
+                    case HallwayType.ThreeWayLeft:
+                        Instantiate(hallwayThreeWay, position,
+                            Quaternion.Euler(0, 180, 0));
+                        break;
+                    case HallwayType.ThreeWayTop:
+                        Instantiate(hallwayThreeWay, position,
+                            Quaternion.Euler(0, 90, 0));
+                        break;
+                    case HallwayType.TurnTopRight:
+                        Instantiate(hallwayTurn, position,
+                            Quaternion.Euler(0, 270, 0));
+                        break;
+                    case HallwayType.TurnRightBottom:
+                        Instantiate(hallwayTurn, position,
+                            Quaternion.Euler(0, 180, 0));
+                        break;
+                    case HallwayType.TurnBottomLeft:
+                        Instantiate(hallwayTurn, position,
+                            Quaternion.Euler(0, 90, 0));
+                        break;
+                    case HallwayType.TurnLeftTop:
+                        Instantiate(hallwayTurn, position,
+                            Quaternion.Euler(0, 0, 0));
+                        break;
+                    case HallwayType.StraightVertical:
+                        Instantiate(hallwayStraight, position,
+                            Quaternion.Euler(0, 0, 0));
+                        break;
+                    case HallwayType.StraightHorizontal:
+                        Instantiate(hallwayStraight, position,
+                            Quaternion.Euler(0, 90, 0));
                         break;
                 }
             }
@@ -362,7 +462,7 @@ public class DungeonGenerator : ScriptableObject {
         return null;
     }
 
-    public void DrawHallwayMap(HallwayType[,] hallwayMap) {
+    public void DebugHallwayMap(HallwayType[,] hallwayMap) {
         for (int x = 0; x < hallwayMap.GetLength(0); x++) {
             for (int y = 0; y < hallwayMap.GetLength(1); y++) {
                 var hallway = hallwayMap[x, y];
@@ -371,7 +471,17 @@ public class DungeonGenerator : ScriptableObject {
                         break;
                     case HallwayType.None:
                         break;
-                    case HallwayType.Hallway:
+                    case HallwayType.FourWay:
+                    case HallwayType.ThreeWayBottom:
+                    case HallwayType.ThreeWayLeft:
+                    case HallwayType.ThreeWayRight:
+                    case HallwayType.ThreeWayTop:
+                    case HallwayType.TurnBottomLeft:
+                    case HallwayType.TurnLeftTop:
+                    case HallwayType.TurnRightBottom:
+                    case HallwayType.TurnTopRight:
+                    case HallwayType.StraightVertical:
+                    case HallwayType.StraightHorizontal:
                         Debug.DrawLine(
                             new Vector3(x * hallwaySize + minX, 0, y * hallwaySize + minY),
                             new Vector3(x * hallwaySize + minX, 5, y * hallwaySize + minY),
@@ -403,14 +513,19 @@ public class Room {
         this.height = height;
         connectedRooms = new HashSet<Room>();
 
-        entranceRelative = new Point(-width / 2f, 0);
-        exitRelative = new Point(width / 2f, 0);
+        var entranceChild = resource.transform.Find("Entrance");
+        var exitChild = resource.transform.Find("Exit");
+        entranceRelative = new Point(
+            entranceChild.localPosition.x * resource.transform.localScale.x,
+            entranceChild.localPosition.z * resource.transform.localScale.z);
+        exitRelative = new Point(
+            exitChild.localPosition.x * resource.transform.localScale.x,
+            exitChild.localPosition.z * resource.transform.localScale.z);
     }
 
     public void FinalizePosition() {
-        // TODO: Autodiscover these based on GameObject's subobjects (exit / entrance GameObjects).
-        entrance = new Point(position.x + entranceRelative.x, position.y);
-        exit = new Point(position.x + exitRelative.x, position.y);
+        entrance = new Point(position.x + entranceRelative.x, position.y + entranceRelative.y);
+        exit = new Point(position.x + exitRelative.x, position.y + exitRelative.y);
     }
 
     public void DeleteConnectionsIntoSelf() {
@@ -498,7 +613,7 @@ public class Room {
         }
     }
 
-    public void DrawEntireGraph() {
+    public void DebugGraph() {
         var queue = new Queue<Room>();
         queue.Enqueue(this);
         var seen = new HashSet<Room>(queue);
@@ -523,26 +638,39 @@ public class Room {
         var start = new Point(position.x + entranceRelative.x, position.y + entranceRelative.y);
         var aligned = new Point(start.x, start.y);
 
-        aligned.x = Mathf.CeilToInt(aligned.x);
-        aligned.y = Mathf.CeilToInt(aligned.y);
+        var leftPoint = hallwaySize * Mathf.FloorToInt(start.x / hallwaySize) + gridStartX % hallwaySize;
+        var rightPoint = leftPoint + hallwaySize;
+        if (aligned.x - leftPoint < aligned.x - rightPoint) {
+            aligned.x = leftPoint;
+        } else {
+            aligned.x = rightPoint;
+        }
 
-        aligned.x += (aligned.x + gridStartX) % hallwaySize;
-        aligned.y += (aligned.y + gridStartY) % hallwaySize;
+        var topPoint = hallwaySize * Mathf.FloorToInt(start.y / hallwaySize) + gridStartY % hallwaySize;
+        var bottomPoint = topPoint + hallwaySize;
+        if (aligned.y - topPoint < aligned.y - bottomPoint) {
+            aligned.y = topPoint;
+        } else {
+            aligned.y = bottomPoint;
+        }
+
+        // TODO: This assumes room rotation is where entrance + exit are horizontal.
         aligned.x += hallwaySize / 2f;
-        aligned.y += hallwaySize / 2f;
 
         position.x += aligned.x - start.x;
         position.y += aligned.y - start.y;
 
         // Check if exit is unaligned? Exit and entrance must at least be aligned...
-        Debug.DrawLine(
-            new Vector3(position.x + entranceRelative.x, 0, position.y + entranceRelative.y),
-            new Vector3(position.x + entranceRelative.x, 5, position.y + entranceRelative.y),
-            Color.cyan, 1000000f);
-        Debug.DrawLine(
-            new Vector3(position.x + exitRelative.x, 0, position.y + exitRelative.y),
-            new Vector3(position.x + exitRelative.x, 5, position.y + exitRelative.y),
-            Color.magenta, 1000000f);
+        if (GeneratorDebugSettings.DebugEntranceExits) {
+            Debug.DrawLine(
+                new Vector3(position.x + entranceRelative.x, 0, position.y + entranceRelative.y),
+                new Vector3(position.x + entranceRelative.x, 5, position.y + entranceRelative.y),
+                Color.cyan, 1000000f);
+            Debug.DrawLine(
+                new Vector3(position.x + exitRelative.x, 0, position.y + exitRelative.y),
+                new Vector3(position.x + exitRelative.x, 5, position.y + exitRelative.y),
+                Color.magenta, 1000000f);
+        }
 
         instance.transform.position = new Vector3(position.x, 0, position.y);
     }
@@ -558,7 +686,22 @@ public class Point {
     }
 }
 
-public enum HallwayType { None, Invalid, Hallway };
+public enum HallwayType {
+    None,
+    Invalid,
+    Door,
+    StraightVertical,
+    StraightHorizontal,
+    TurnTopRight,
+    TurnRightBottom,
+    TurnBottomLeft,
+    TurnLeftTop,
+    ThreeWayTop,
+    ThreeWayRight,
+    ThreeWayBottom,
+    ThreeWayLeft,
+    FourWay,
+};
 
 public class HallwayGenerator {
     private HallwayType[,] map;
@@ -652,11 +795,13 @@ public class HallwayGenerator {
         AStarSearch(startHallway, endHallway);
         var shortestPathHallway = new List<HallwayPoint> { endHallway };
         BuildShortestPath(shortestPathHallway, endHallway);
-        Debug.Log(shortestPathHallway.Count);
 
         foreach (var hallwayPoint in shortestPathHallway) {
-            map[hallwayPoint.x, hallwayPoint.y] = HallwayType.Hallway;
+            map[hallwayPoint.x, hallwayPoint.y] = HallwayType.FourWay;
         }
+        // TODO: This hardcodes the room rotation.
+        map[startHallway.x + 1, startHallway.y] = HallwayType.Door;
+        map[endHallway.x - 1, endHallway.y] = HallwayType.Door;
     }
 
     private void AStarSearch(HallwayPoint start, HallwayPoint end) {
