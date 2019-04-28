@@ -12,6 +12,14 @@ public static class GeneratorDebugSettings {
     public static bool DebugEntranceExits = false;
 }
 
+public class Dungeon {
+    public Room spawnRoom;
+
+    public Dungeon(Room spawnRoom) {
+        this.spawnRoom = spawnRoom;
+    }
+}
+
 public class DungeonGenerator : ScriptableObject {
     /*
      * Find how big it is by querying the object dimensions, organize that information into an Object.
@@ -44,18 +52,20 @@ public class DungeonGenerator : ScriptableObject {
 
     public int hallwaySize;
 
-    public void Generate() {
+    public Dungeon Generate() {
         hallwaySize = 10;
 
         var rooms = GenerateRooms();
-        var startingRoom = GenerateConnections(rooms);
-        var hallwayMap = GenerateHallwayMap(startingRoom, rooms);
+        var spawnRoom = GenerateConnections(rooms);
+        var hallwayMap = GenerateHallwayMap(spawnRoom, rooms);
         if (GeneratorDebugSettings.DebugHallways) {
             DebugHallwayMap(hallwayMap);
         }
 
         SetHallwayTypes(hallwayMap);
         GenerateHallways(hallwayMap);
+
+        return new Dungeon(spawnRoom);
     }
 
     public List<Room> GenerateRooms() {
@@ -63,7 +73,7 @@ public class DungeonGenerator : ScriptableObject {
 
         var rooms = new List<Room>();
 
-        var roomCount = 20;
+        var roomCount = 10;
 
         var mapWidth = 10;
         var mapHeight = 10;
@@ -80,7 +90,7 @@ public class DungeonGenerator : ScriptableObject {
         // Spread the rooms out.
         var spreading = true;
         var spreadSpeed = 1f;
-        var minimumDistance = 150;
+        var minimumDistance = 200;
         var movements = new List<System.Tuple<Vector2, Room>>();
         while (spreading) {
             spreading = false;
@@ -212,35 +222,56 @@ public class DungeonGenerator : ScriptableObject {
             }
         }
 
-        Room startingRoom = null;
-        var startingRoomDistanceSq = float.MaxValue;
+        Room spawnRoom = null;
+        var spawnRoomDistanceSq = float.MaxValue;
         foreach (var room in rooms) {
             var distanceSq = room.position.x * room.position.x + room.position.y * room.position.y;
-            if (distanceSq < startingRoomDistanceSq) {
-                startingRoomDistanceSq = distanceSq;
-                startingRoom = room;
+            if (distanceSq < spawnRoomDistanceSq) {
+                spawnRoomDistanceSq = distanceSq;
+                spawnRoom = room;
             }
         }
 
         if (GeneratorDebugSettings.DebugStartingRoom) {
-            Debug.DrawLine(new Vector3(startingRoom.position.x, 0, startingRoom.position.y),
-                new Vector3(startingRoom.position.x, 5, startingRoom.position.y),
+            Debug.DrawLine(new Vector3(spawnRoom.position.x, 0, spawnRoom.position.y),
+                new Vector3(spawnRoom.position.x, 5, spawnRoom.position.y),
                 Color.yellow, 100000f);
         }
 
         // Center room has no entrance; you spawn there.
-        startingRoom.DeleteConnectionsIntoSelf();
+        spawnRoom.DeleteConnectionsIntoSelf();
 
         // Remove as many connections as possible while preventing islands.
-        startingRoom.DeleteAsManyConnectionsAsPossible();
+        spawnRoom.DeleteAsManyConnectionsAsPossible();
 
         // Remove any loops while preventing islands.
-        startingRoom.DeleteLoops();
+        spawnRoom.DeleteLoops();
 
-        // TODO: Add some more connections randomly.
+        // Add some more connections randomly.
+        var extraConnections = rooms.Count * 0.1;
+        var madeConnections = 0f;
+        while (madeConnections < extraConnections) {
+            var randomRoomA = rooms[Random.Range(0, rooms.Count - 1)];
+            var randomRoomB = rooms[Random.Range(0, rooms.Count - 1)];
+            if (randomRoomA == randomRoomB) {
+                madeConnections += 0.1f;
+                continue;
+            }
+            if (randomRoomA.connectedRooms.Contains(randomRoomB) &&
+                randomRoomB.connectedRooms.Contains(randomRoomA)) {
+                madeConnections += 0.1f;
+                continue;
+            }
+            if (randomRoomB == spawnRoom) {
+                madeConnections += 0.1f;
+                continue;
+            }
+            randomRoomA.connectedRooms.Add(randomRoomB);
+            madeConnections++;
+        }
 
         if (GeneratorDebugSettings.DebugGraph) {
-            startingRoom.DebugGraph();
+            spawnRoom.DebugGraph();
         }
 
         foreach (var room in rooms) {
@@ -248,7 +279,7 @@ public class DungeonGenerator : ScriptableObject {
             room.FinalizePosition();
         }
 
-        return startingRoom;
+        return spawnRoom;
     }
 
     public HallwayType[,] GenerateHallwayMap(Room startingRoom, List<Room> rooms) {
@@ -315,21 +346,28 @@ public class DungeonGenerator : ScriptableObject {
         var queue = new Queue<Room>();
         queue.Enqueue(startingRoom);
         var seen = new HashSet<Room>(queue);
+
+        var hallwayPaths = new List<System.Tuple<int, int, int, int>>();
         while (queue.Count > 0) {
             var room = queue.Dequeue();
             foreach (var connectedRoom in room.connectedRooms) {
                 // TODO: This hardcodes the room rotation.
-                hallwayGenerator.FillShortestHallwayPath(
+                hallwayPaths.Add(new System.Tuple<int, int, int, int>(
                     Mathf.CeilToInt((room.exit.x - minX - hallwaySize / 2f) / hallwaySize),
                     Mathf.CeilToInt((room.exit.y - minY) / hallwaySize),
                     Mathf.CeilToInt((connectedRoom.entrance.x - minX) / hallwaySize),
-                    Mathf.CeilToInt((connectedRoom.entrance.y - minY) / hallwaySize));
+                    Mathf.CeilToInt((connectedRoom.entrance.y - minY) / hallwaySize)));
 
                 if (!seen.Contains(connectedRoom)) {
                     queue.Enqueue(connectedRoom);
                     seen.Add(connectedRoom);
                 }
             }
+        }
+
+        // Fill hallways in order of length.
+        foreach (var hallwayPath in hallwayPaths.OrderBy(p => Mathf.Pow(p.Item1 - p.Item3, 2) + Mathf.Pow(p.Item2 - p.Item4, 2))) {
+            hallwayGenerator.FillShortestHallwayPath(hallwayPath.Item1, hallwayPath.Item2, hallwayPath.Item3, hallwayPath.Item4);
         }
 
         return map;
@@ -727,8 +765,10 @@ public class HallwayGenerator {
         public int y;
         public int endX;
         public int endY;
+        private int baseCost;
+        public int cost;
         public float? minCostToStart;
-        public float straightLineDistanceToEnd;
+        public float manhattenDistanceToEnd;
         public HallwayPoint nearestToStart;
 
         public HallwayPoint(int x, int y) {
@@ -736,17 +776,39 @@ public class HallwayGenerator {
             this.y = y;
         }
 
-        public void SetEnd(int endX, int endY) {
+        public void SetEnd(int endX, int endY, HallwayType[,] map) {
             float dX = endX - x;
             float dY = endY - y;
 
             this.endX = endX;
             this.endY = endY;
 
+            baseCost = 1;
+            if (x > 0 && (map[x - 1, y] != HallwayType.None && map[x - 1, y] != HallwayType.Invalid)) {
+                baseCost = 100;
+            } else if (y > 0 && (map[x, y - 1] != HallwayType.None && map[x, y - 1] != HallwayType.Invalid)) {
+                baseCost = 100;
+            } else if (x + 1 < map.GetLength(0) && (map[x + 1, y] != HallwayType.None && map[x + 1, y] != HallwayType.Invalid)) {
+                baseCost = 100;
+            } else if (y + 1 < map.GetLength(1) && (map[x, y + 1] != HallwayType.None && map[x, y + 1] != HallwayType.Invalid)) {
+                baseCost = 100;
+            }
+
+            cost = baseCost;
+
             minCostToStart = null;
-            straightLineDistanceToEnd = Mathf.Sqrt(
-                dX * dX + dY * dY);
+            manhattenDistanceToEnd = Mathf.Abs(dX + dY);
             nearestToStart = null;
+        }
+
+        public void CalculateCost(HallwayPoint from) {
+            var extraCost = 0;
+            if (from.nearestToStart != null) {
+                if (DirectionFrom(from) != from.DirectionFrom(from.nearestToStart)) {
+                    extraCost = 100;
+                }
+            }
+            cost = baseCost + extraCost;
         }
 
         public List<HallwayPoint> ConnectedHallwayPoints(HallwayType[,] map, HallwayPoint[,] hallwayPoints) {
@@ -781,12 +843,24 @@ public class HallwayGenerator {
 
             return connectedHallwayPoints;
         }
+
+        private int DirectionFrom(HallwayPoint from) {
+            if (x > from.x) {
+                return 0;
+            } else if (x < from.x) {
+                return 1;
+            } else if (y < from.y) {
+                return 2;
+            } else {
+                return 3;
+            }
+        }
     }
 
     public void FillShortestHallwayPath(int startX, int startY, int endX, int endY) {
         for (int x = 0; x < map.GetLength(0); x++) {
             for (int y = 0; y < map.GetLength(1); y++) {
-                points[x, y].SetEnd(endX, endY);
+                points[x, y].SetEnd(endX, endY, map);
             }
         }
 
@@ -810,16 +884,18 @@ public class HallwayGenerator {
         start.minCostToStart = 0;
         var priorityQueue = new List<HallwayPoint> { start };
         do {
-            priorityQueue = priorityQueue.OrderBy(x => x.minCostToStart + x.straightLineDistanceToEnd).ToList();
+            priorityQueue = priorityQueue.OrderBy(x => x.minCostToStart + x.manhattenDistanceToEnd).ToList();
             var hallwayPoint = priorityQueue.First();
             priorityQueue.Remove(hallwayPoint);
-            foreach (var connectedHallwayPoint in hallwayPoint.ConnectedHallwayPoints(map, points)) {
+            hallwayPoint.ConnectedHallwayPoints(map, points).ForEach(p => p.CalculateCost(hallwayPoint));
+
+            foreach (var connectedHallwayPoint in hallwayPoint.ConnectedHallwayPoints(map, points).OrderBy(x => x.cost).ToList()) {
                 if (visited[connectedHallwayPoint.x, connectedHallwayPoint.y]) {
                     continue;
                 }
                 if (connectedHallwayPoint.minCostToStart == null ||
-                    hallwayPoint.minCostToStart + 1 < connectedHallwayPoint.minCostToStart) {
-                    connectedHallwayPoint.minCostToStart = hallwayPoint.minCostToStart + 1;
+                    hallwayPoint.minCostToStart + connectedHallwayPoint.cost < connectedHallwayPoint.minCostToStart) {
+                    connectedHallwayPoint.minCostToStart = hallwayPoint.minCostToStart + connectedHallwayPoint.cost;
                     connectedHallwayPoint.nearestToStart = hallwayPoint;
                     if (!priorityQueue.Contains(connectedHallwayPoint)) {
                         priorityQueue.Add(connectedHallwayPoint);
