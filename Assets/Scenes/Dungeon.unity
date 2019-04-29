@@ -257,7 +257,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 518157684}
-  m_LocalRotation: {x: -0.14837547, y: 0.0000000045259863, z: -0.0000000046983173,
+  m_LocalRotation: {x: -0.14837547, y: 0.0000000045259614, z: -0.000000004698157,
     w: -0.9889311}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -326,7 +326,7 @@ MonoBehaviour:
     m_MaxSpeed: 2
     m_AccelTime: 0.2
     m_DecelTime: 0.1
-    m_InputAxisName: DS4 Vertical
+    m_InputAxisName: Mouse Y
     m_InputAxisValue: 0
     m_InvertInput: 1
     m_MinValue: 0
@@ -346,12 +346,12 @@ MonoBehaviour:
     m_LegacyVelocityFilterStrength: -1
   m_XAxis:
     Value: 0
-    m_MaxSpeed: 0
+    m_MaxSpeed: 200
     m_AccelTime: 0.2
     m_DecelTime: 0.1
-    m_InputAxisName: DS4 Horizontal
+    m_InputAxisName: Mouse X
     m_InputAxisValue: 0
-    m_InvertInput: 1
+    m_InvertInput: 0
     m_MinValue: -180
     m_MaxValue: 180
     m_Wrap: 1
@@ -784,12 +784,12 @@ MonoBehaviour:
     m_LegacyVelocityFilterStrength: -1
   m_XAxis:
     Value: 0
-    m_MaxSpeed: 0
+    m_MaxSpeed: 200
     m_AccelTime: 0.2
     m_DecelTime: 0.1
-    m_InputAxisName: DS4 Horizontal
+    m_InputAxisName: Mouse X
     m_InputAxisValue: 0
-    m_InvertInput: 1
+    m_InvertInput: 0
     m_MinValue: -180
     m_MaxValue: 180
     m_Wrap: 1
@@ -909,12 +909,12 @@ MonoBehaviour:
     m_LegacyVelocityFilterStrength: -1
   m_XAxis:
     Value: 0
-    m_MaxSpeed: 0
+    m_MaxSpeed: 200
     m_AccelTime: 0.2
     m_DecelTime: 0.1
-    m_InputAxisName: DS4 Horizontal
+    m_InputAxisName: Mouse X
     m_InputAxisValue: 0
-    m_InvertInput: 1
+    m_InvertInput: 0
     m_MinValue: -180
     m_MaxValue: 180
     m_Wrap: 1
@@ -1008,7 +1008,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1323362161}
-  m_LocalRotation: {x: -0.11235466, y: 0.000000017305423, z: 8.2151413e-10, w: -0.9936682}
+  m_LocalRotation: {x: -0.11235466, y: -0.00000001794184, z: 0.0000000048069433, w: -0.9936682}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -1260,12 +1260,12 @@ MonoBehaviour:
     m_LegacyVelocityFilterStrength: -1
   m_XAxis:
     Value: 0
-    m_MaxSpeed: 0
+    m_MaxSpeed: 200
     m_AccelTime: 0.2
     m_DecelTime: 0.1
-    m_InputAxisName: DS4 Horizontal
+    m_InputAxisName: Mouse X
     m_InputAxisValue: 0
-    m_InvertInput: 1
+    m_InvertInput: 0
     m_MinValue: -180
     m_MaxValue: 180
     m_Wrap: 1
