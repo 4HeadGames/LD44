@@ -14,12 +14,23 @@ public class PlayerMovement : MonoBehaviour {
     private float _rotation;
     private Vector3 _moveDirection = Vector3.zero;
 
-    void Start() {
+    void Start()
+    {
         _animator = GetComponent<Animator>();
         _controller = GetComponent<CharacterController>();
+
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
-    void Update() {
+    void Update()
+    {
+        Animate();
+
+        if (Input.GetKey(KeyCode.Escape))
+        {
+            Cursor.lockState = CursorLockMode.None;
+        }
+
         if (Input.GetKey(KeyCode.LeftShift)) {
             Dash();
         } else {
@@ -27,28 +38,50 @@ public class PlayerMovement : MonoBehaviour {
         }
     }
 
-    void Move() {
+    void Move()
+    {
         if (Input.GetAxis("Vertical") != 0 || Input.GetAxis("Horizontal") != 0)
         {
-            _animator.SetBool("isRunning", true);
-            _moveDirection = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
-            transform.forward = _moveDirection;
+            _rotation = Input.GetAxis("Horizontal") * rotateSpeed;
+            transform.Rotate(0, _rotation, 0);
+
+            _moveDirection = Vector3.forward * Input.GetAxis("Vertical");
+            _moveDirection = transform.TransformDirection(_moveDirection);
             _moveDirection *= speed;
+
             _controller.SimpleMove(_moveDirection);
-        }
-        else if (Input.GetAxis("Vertical") == 0)
-        {
-            _animator.SetBool("isRunning", false);
         }
     }
 
-    void Dash() {
+    void Dash()
+    {
         if (Input.GetKeyDown(KeyCode.A)) {
             transform.Translate(Vector3.left * dashSpeed);
         } else if (Input.GetKeyDown(KeyCode.D)) {
             transform.Translate(Vector3.right * dashSpeed);
         } else if (Input.GetKeyDown(KeyCode.S)) {
             transform.Translate(Vector3.back * dashSpeed);
+        }
+    }
+
+    void Animate()
+    {
+        if (Input.GetAxis("Vertical") > 0)
+        {
+            _animator.SetBool("isRunning", true);
+            _animator.SetBool("isWalking", false);
+        }
+
+        if (Input.GetAxis("Vertical") < 0)
+        {
+            _animator.SetBool("isWalking", true);
+            _animator.SetBool("isRunning", false);
+        }
+
+        if (Input.GetAxis("Vertical") == 0)
+        {
+            _animator.SetBool("isRunning", false);
+            _animator.SetBool("isWalking", false);
         }
     }
 }
